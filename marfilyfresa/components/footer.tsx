@@ -1,0 +1,77 @@
+"use client"
+
+import Link from "next/link"
+import { Instagram, MessageCircle } from "lucide-react"
+
+export function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  const quickLinks = [
+    { id: "inicio", label: "Inicio" },
+    { id: "catalogo", label: "Catálogo" },
+    { id: "nosotros", label: "Nosotros" },
+    { id: "contacto", label: "Contacto" },
+  ]
+
+  const socialLinks = [
+    { href: "https://instagram.com", label: "Instagram", icon: Instagram },
+    { href: "https://wa.me/34612345678", label: "WhatsApp", icon: MessageCircle },
+  ]
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
+  return (
+    <footer className="bg-brown py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-1">
+            <span className="font-serif text-xl text-cream">MarfilYFresa</span>
+            <span className="text-sm">🍓</span>
+          </Link>
+
+          {/* Quick Links */}
+          <nav className="flex flex-wrap justify-center gap-6">
+            {quickLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                className="text-sm text-cream/80 transition-colors hover:text-cream"
+              >
+                {link.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Social Links */}
+          <div className="flex items-center gap-4">
+            {socialLinks.map((social) => (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-cream/10 p-2 text-cream transition-all hover:bg-cream/20 hover:scale-110"
+                aria-label={social.label}
+              >
+                <social.icon className="h-5 w-5" />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-10 border-t border-cream/10 pt-6 text-center">
+          <p className="text-xs text-cream/60">
+            © {currentYear} MarfilYFresa. Todos los derechos reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
