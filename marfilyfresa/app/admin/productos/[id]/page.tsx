@@ -7,8 +7,11 @@ export default async function EditProductoPage({ params }: { params: { id: strin
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/auth")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-  if (profile?.role !== "admin") redirect("/")
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("role")
+  .eq("id", user.id)
+  .single() as { data: { role: string | null } | null }
 
   const { data: product } = await supabase.from("products").select("*").eq("id", params.id).single()
   if (!product) notFound()

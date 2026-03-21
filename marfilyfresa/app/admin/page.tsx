@@ -1,25 +1,33 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Package, ShoppingBag, Users, Heart, Instagram, BarChart3 } from "lucide-react"
+import { Package, ShoppingBag, Users, Heart, Instagram } from "lucide-react"
+
+interface Order {
+  id: string
+  total_amount: number
+  status: string | null
+  created_at: string
+}
+
+interface Profile {
+  role: string | null
+}
 
 export default async function AdminPage() {
   const supabase = await createSupabaseServerClient()
 
-  // Auth check
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/auth?redirect=admin")
 
-  // Role check
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single()
+    .single() as { data: Profile | null }
 
   if (profile?.role !== "admin") redirect("/")
 
-  // Stats
   const [
     { count: totalProducts },
     { count: totalOrders },
@@ -33,7 +41,7 @@ export default async function AdminPage() {
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("wishlist").select("*", { count: "exact", head: true }),
     supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    supabase.from("orders").select("id, total_amount, status, created_at").order("created_at", { ascending: false }).limit(5),
+    supabase.from("orders").select("id, total_amount, status, created_at").order("created_at", { ascending: false }).limit(5) as unknown as { data: Order[] },
   ])
 
   const stats = [
@@ -61,7 +69,6 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Admin header */}
       <header className="bg-brown text-cream px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-serif text-xl">MarfilFresa</span>
@@ -75,7 +82,6 @@ export default async function AdminPage() {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="font-serif text-3xl text-text-main mb-8">Panel de administración</h1>
 
-        {/* Stats grid */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-10">
           {stats.map((stat) => (
             <Link
@@ -95,7 +101,6 @@ export default async function AdminPage() {
           ))}
         </div>
 
-        {/* Quick actions */}
         <div className="grid gap-4 sm:grid-cols-3 mb-10">
           <Link
             href="/admin/productos/nuevo"
@@ -129,7 +134,6 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        {/* Recent orders */}
         <div className="rounded-2xl bg-white overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-brown/10">
             <h2 className="font-serif text-lg text-text-main">Pedidos recientes</h2>
