@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { SlidersHorizontal, Heart, ShoppingBag, Search } from "lucide-react"
+import { Heart, ShoppingBag, Search } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { FilterDrawer } from "@/components/filter-drawer"
 import { useShop } from "@/context/shop-context"
 import { createSupabaseBrowserClient } from "@/lib/supabase"
 
 const CATEGORIES = ["Todos", "anillos", "collares", "pulseras", "pendientes", "bolsos", "sudaderas", "otros"]
+const KNOWN_CATS = new Set(CATEGORIES)
 
 interface Product {
   id: string
@@ -28,9 +28,8 @@ export default function CatalogoPage() {
   const [activeCategory, setActiveCategory] = useState("Todos")
   const [searchQuery, setSearchQuery] = useState("")
   const [showOnSale, setShowOnSale] = useState(false)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [minPrice, setMinPrice] = useState("")
-  const [maxPrice, setMaxPrice] = useState("")
+  const [maxPriceFilter, setMaxPriceFilter] = useState(0)
+  const [storeMaxPrice, setStoreMaxPrice] = useState(0)
 
   const { favorites, toggleFavorite, addToCart } = useShop()
   const supabase = createSupabaseBrowserClient()
@@ -46,7 +45,11 @@ export default function CatalogoPage() {
       .from("products")
       .select("*")
       .order("created_at", { ascending: false })
-    setProducts(data ?? [])
+    const prods = data ?? []
+    setProducts(prods)
+    const max = prods.length > 0 ? Math.ceil(Math.max(...prods.map((p) => Number(p.price)))) : 100
+    setStoreMaxPrice(max)
+    setMaxPriceFilter(max)
     setLoading(false)
   }
 
@@ -61,11 +64,18 @@ export default function CatalogoPage() {
 
   // Filter products
   const filtered = products.filter((p) => {
-    if (activeCategory !== "Todos" && p.category !== activeCategory) return false
+    if (activeCategory !== "Todos") {
+      const cat = p.category ?? ""
+      if (activeCategory === "otros") {
+        // "otros" matches products with category "otros" OR any unknown category
+        if (cat !== "otros" && KNOWN_CATS.has(cat)) return false
+      } else {
+        if (cat !== activeCategory) return false
+      }
+    }
     if (showOnSale && !p.is_on_sale) return false
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
-    if (minPrice && Number(p.price) < Number(minPrice)) return false
-    if (maxPrice && Number(p.price) > Number(maxPrice)) return false
+    if (Number(p.price) > maxPriceFilter) return false
     return true
   })
 
@@ -75,18 +85,9 @@ export default function CatalogoPage() {
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h1 className="font-serif text-4xl text-text-main">Catálogo</h1>
-            <p className="text-text-soft text-sm mt-1">{filtered.length} productos</p>
-          </div>
-          <button
-            onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-brown/20 bg-white px-4 py-2 text-sm font-medium text-text-main hover:border-terracota transition-colors"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filtrar
-          </button>
+        <div className="mb-8">
+          <h1 className="font-serif text-4xl text-text-main">Catálogo</h1>
+          <p className="text-text-soft text-sm mt-1">{filtered.length} productos</p>
         </div>
 
         {/* Search */}
@@ -101,8 +102,8 @@ export default function CatalogoPage() {
           />
         </div>
 
-        {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-8 scrollbar-none">
+        {/* Category pills + En oferta */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -116,7 +117,45 @@ export default function CatalogoPage() {
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </button>
           ))}
+
+          {/* Separator */}
+          <div className="flex-shrink-0 w-px bg-brown/20 mx-1" />
+
+          {/* En oferta toggle */}
+          <button
+            onClick={() => setShowOnSale(!showOnSale)}
+            className={`flex-shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+              showOnSale
+                ? "bg-terracota text-white"
+                : "bg-white text-text-soft border border-brown/20 hover:border-terracota hover:text-text-main"
+            }`}
+          >
+            En oferta
+          </button>
         </div>
+
+        {/* Price range slider */}
+        {!loading && storeMaxPrice > 0 && (
+          <div className="mb-8 bg-white rounded-2xl px-5 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-text-main">Precio máximo</span>
+              <span className="text-sm font-medium text-terracota">{maxPriceFilter} €</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={storeMaxPrice}
+              step={1}
+              value={maxPriceFilter}
+              onChange={(e) => setMaxPriceFilter(Number(e.target.value))}
+              className="w-full accent-terracota"
+            />
+            <div className="flex justify-between text-xs text-text-soft mt-1">
+              <span>0 €</span>
+              <span>{storeMaxPrice} €</span>
+            </div>
+          </div>
+        )}
 
         {/* Products grid */}
         {loading ? (
@@ -195,23 +234,6 @@ export default function CatalogoPage() {
           </div>
         )}
       </main>
-
-      <FilterDrawer
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        showOnSale={showOnSale}
-        onToggleOnSale={setShowOnSale}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        onMinPrice={setMinPrice}
-        onMaxPrice={setMaxPrice}
-        onReset={() => {
-          setShowOnSale(false)
-          setMinPrice("")
-          setMaxPrice("")
-          setActiveCategory("Todos")
-        }}
-      />
 
       <Footer />
     </div>
