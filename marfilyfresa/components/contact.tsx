@@ -1,7 +1,7 @@
 import { MessageCircle } from "lucide-react"
 
 export function Contact() {
-  const whatsappNumber = "+34 612 345 678"
+  const whatsappNumber = "+34 644 06 57 70"
   const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s/g, "").replace("+", "")}`
 
   return (

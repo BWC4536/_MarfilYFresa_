@@ -72,7 +72,7 @@ export default function ContactoPage() {
                   </div>
                   <div>
                     <p className="font-medium text-text-main">WhatsApp</p>
-                    <p className="text-sm text-text-soft">+34 612 345 678</p>
+                    <p className="text-sm text-text-soft">+34 644 06 57 70</p>
                     <p className="text-xs text-text-soft mt-0.5">Respuesta más rápida</p>
                   </div>
                 </a>
