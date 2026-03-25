@@ -14,7 +14,7 @@ export function Footer() {
   ]
 
   const socialLinks = [
-    { href: "https://instagram.com", label: "Instagram", icon: Instagram },
+    { href: "https://www.instagram.com/marfilyfresa/", label: "Instagram", icon: Instagram },
     { href: "https://wa.me/34644065770", label: "WhatsApp", icon: MessageCircle },
   ]
 

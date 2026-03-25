@@ -82,7 +82,7 @@ export function Navbar() {
               <div className="flex items-center gap-1">
                 {/* Instagram */}
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/marfilyfresa/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hidden sm:block p-2 text-text-main transition-colors hover:text-terracota"
