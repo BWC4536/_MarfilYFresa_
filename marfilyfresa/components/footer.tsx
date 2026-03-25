@@ -23,10 +23,13 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1">
-            <span className="font-serif text-xl text-cream">MarfilFresa</span>
-            <span className="text-sm">🍓</span>
-          </Link>
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <Link href="/" className="flex items-center gap-1">
+              <span className="font-serif text-xl text-cream">MarfilFresa</span>
+              <span className="text-sm">🍓</span>
+            </Link>
+            <p className="text-xs text-cream/60">Desde 2021 · Joyas de acero inoxidable y plata</p>
+          </div>
 
           {/* Quick Links */}
           <nav className="flex flex-wrap justify-center gap-6">
