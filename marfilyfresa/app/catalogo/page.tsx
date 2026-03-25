@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Heart, ShoppingBag, Search, X, Tag } from "lucide-react"
+import { Heart, ShoppingBag, Search, X, Tag, Link2, Check } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { useShop } from "@/context/shop-context"
@@ -30,6 +30,7 @@ export default function CatalogoPage() {
   const [maxPriceFilter, setMaxPriceFilter] = useState(0)
   const [storeMaxPrice, setStoreMaxPrice] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const { favorites, toggleFavorite, addToCart } = useShop()
   const supabase = createSupabaseBrowserClient()
@@ -43,7 +44,7 @@ export default function CatalogoPage() {
   // Close modal on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setSelectedProduct(null)
+      if (e.key === "Escape") closeModal()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -85,6 +86,17 @@ export default function CatalogoPage() {
       return
     }
     toggleFavorite(productId, productName)
+  }
+
+  function openModal(product: Product) {
+    setSelectedProduct(product)
+    window.history.replaceState(null, "", `/producto/${product.id}`)
+  }
+
+  function closeModal() {
+    setSelectedProduct(null)
+    setCopied(false)
+    window.history.replaceState(null, "", "/catalogo")
   }
 
   // Filter products
@@ -195,7 +207,7 @@ export default function CatalogoPage() {
               <article key={product.id} className="group relative">
                 <div
                   className="relative aspect-square overflow-hidden rounded-2xl bg-white cursor-pointer"
-                  onClick={() => setSelectedProduct(product)}
+                  onClick={() => openModal(product)}
                 >
                   <Image
                     src={product.image_url ?? "/placeholder.jpg"}
@@ -252,7 +264,7 @@ export default function CatalogoPage() {
                 <div className="mt-3 text-center">
                   <h3
                     className="font-serif text-base text-text-main cursor-pointer hover:text-terracota transition-colors"
-                    onClick={() => setSelectedProduct(product)}
+                    onClick={() => openModal(product)}
                   >
                     {product.name}
                   </h3>
@@ -272,7 +284,7 @@ export default function CatalogoPage() {
       {selectedProduct && (
         <div
           ref={overlayRef}
-          onClick={(e) => { if (e.target === overlayRef.current) setSelectedProduct(null) }}
+          onClick={(e) => { if (e.target === overlayRef.current) closeModal() }}
           className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4"
           style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
         >
@@ -280,9 +292,27 @@ export default function CatalogoPage() {
             className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-modal"
             style={{ animation: "modalIn 0.25s ease-out" }}
           >
+            {/* Share button */}
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/producto/${selectedProduct.id}`
+                navigator.clipboard.writeText(url).catch(() => {})
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+              className="absolute right-14 top-4 z-10 rounded-full bg-white/80 p-2 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
+              title="Copiar enlace"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-terracota" />
+              ) : (
+                <Link2 className="h-4 w-4 text-text-main" />
+              )}
+            </button>
+
             {/* Close button */}
             <button
-              onClick={() => setSelectedProduct(null)}
+              onClick={() => closeModal()}
               className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-2 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
             >
               <X className="h-5 w-5 text-text-main" />
@@ -347,7 +377,7 @@ export default function CatalogoPage() {
                       image: selectedProduct.image_url ?? "/placeholder.jpg",
                       category: selectedProduct.category,
                     })
-                    setSelectedProduct(null)
+                    closeModal()
                   }}
                   className="flex flex-1 items-center justify-center gap-2 rounded-full bg-terracota py-3 text-sm font-medium text-white hover:bg-brown transition-colors"
                 >
