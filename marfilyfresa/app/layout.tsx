@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: 'MarfilYFresa 🍓 | Joyería colorida y divertida',
   description: 'Joyería colorida y única para chicas jóvenes. Anillos, collares, pulseras y pendientes que te hacen sonreír.',
   icons: {
-    icon: [{ url: '/logo.svg', type: 'image/svg+xml' }],
+    icon: [{ url: '/logo1.png', type: 'image/png' }],
   },
 }
 
