@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (action === "agotado") {
       // Email al admin avisando que el producto se agotó
       await resend.emails.send({
-        from: "MarfilYFresa <pedidos@marfilfresa.com>",
+        from: "MarfilYFresa <onboarding@resend.dev>", // ###correo Natalia
         to: process.env.ADMIN_EMAIL!,
         subject: `⚠️ Producto agotado: ${productName}`,
         html: `
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       // Enviar email a cada cliente que pidió aviso
       const emailPromises = requests.map((r) =>
         resend.emails.send({
-          from: "MarfilYFresa <pedidos@marfilfresa.com>",
+          from: "MarfilYFresa <onboarding@resend.dev>", // ###correo Natalia
           to: r.customer_email,
           subject: `🍓 ¡Ya disponible! ${productName} — MarfilYFresa`,
           html: `

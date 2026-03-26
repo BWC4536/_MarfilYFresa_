@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     `).join('')
 
     await resend.emails.send({
-      from: 'MarfilYFresa <pedidos@marfilfresa.com>',
+      from: 'MarfilYFresa <onboarding@resend.dev>', // ###correo Natalia
       to: process.env.ADMIN_EMAIL!,
       subject: `🍓 Nuevo pedido de ${customerName} — ${total.toFixed(2)} €`,
       html: `

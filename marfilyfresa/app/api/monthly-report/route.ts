@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     })
 
     await resend.emails.send({
-      from: 'MarfilYFresa <informes@marfilfresa.com>',
+      from: 'MarfilYFresa <onboarding@resend.dev>', // ###correo Natalia
       to: process.env.ADMIN_EMAIL!,
       subject: `📊 Informe mensual MarfilYFresa — ${monthName}`,
       html: emailHtml,
