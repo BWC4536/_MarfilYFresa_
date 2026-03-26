@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
+import { notifyStockEmpty, notifyAllPendingCustomers } from "@/lib/notify-stock"
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -54,32 +55,18 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: updateError.message }, { status: 500 })
       }
 
-      // Notificación: producto agotado
+      // Producto agotado → email al admin
       if (newStock === 0 && prevStock > 0) {
-        const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-        await fetch(`${base}/api/stock-notify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId: product.id,
-            productName: product.name,
-            action: "agotado",
-          }),
-        }).catch((e) => console.error("stock-notify agotado:", e))
+        notifyStockEmpty(product.id, product.name).catch((e) =>
+          console.error("notifyStockEmpty:", e)
+        )
       }
 
-      // Notificación: producto repuesto
+      // Producto repuesto desde 0 → email a todos los clientes pendientes
       if (prevStock === 0 && newStock > 0) {
-        const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-        await fetch(`${base}/api/stock-notify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId: product.id,
-            productName: product.name,
-            action: "repuesto",
-          }),
-        }).catch((e) => console.error("stock-notify repuesto:", e))
+        notifyAllPendingCustomers(product.id, product.name).catch((e) =>
+          console.error("notifyAllPendingCustomers:", e)
+        )
       }
 
       return NextResponse.json({ success: true, stock: newStock })
