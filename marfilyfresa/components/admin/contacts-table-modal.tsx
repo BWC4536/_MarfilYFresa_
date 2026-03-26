@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { X, Mail } from "lucide-react"
 import { createSupabaseBrowserClient } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
 
 interface Contact {
   id: string
@@ -23,12 +22,6 @@ export function ContactsTableModal({ initialContacts }: Props) {
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [selected, setSelected] = useState<Contact | null>(null)
   const supabase = createSupabaseBrowserClient()
-  const router = useRouter()
-
-  // Sync when server re-renders with fresh data
-  useEffect(() => {
-    setContacts(initialContacts)
-  }, [initialContacts])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -41,12 +34,12 @@ export function ContactsTableModal({ initialContacts }: Props) {
   }, [selected])
 
   async function toggleRead(id: string, newRead: boolean) {
-    await supabase.from("contacts").update({ read: newRead }).eq("id", id)
+    // Optimistic update first — no router.refresh() to avoid race with server re-render
     setContacts((prev) =>
       prev.map((c) => (c.id === id ? { ...c, read: newRead } : c))
     )
     setSelected((prev) => (prev?.id === id ? { ...prev, read: newRead } : prev))
-    router.refresh()
+    await supabase.from("contacts").update({ read: newRead }).eq("id", id)
   }
 
   function formatDate(iso: string) {
@@ -108,7 +101,7 @@ export function ContactsTableModal({ initialContacts }: Props) {
                   <td className="px-6 py-4 text-sm text-text-soft hidden sm:table-cell">
                     {contact.email}
                   </td>
-                  <td className="px-6 py-4 text-sm text-text-soft max-w-[160px] truncate hidden md:table-cell">
+                  <td className="px-6 py-4 text-sm text-text-soft max-w-40 truncate hidden md:table-cell">
                     {contact.subject ?? "—"}
                   </td>
                   <td className="px-6 py-4 text-sm text-text-main max-w-xs hidden lg:table-cell">

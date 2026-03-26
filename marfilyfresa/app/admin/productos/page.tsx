@@ -4,6 +4,7 @@ import { Plus, Pencil, Instagram, AlertCircle } from "lucide-react"
 import { DeleteProductButton } from "@/components/admin/delete-product-button"
 import { ToggleNotificadoButton } from "@/components/admin/toggle-notificado-button"
 import { ProductQuickControls } from "@/components/admin/product-quick-controls"
+import { DeleteStockRequestButton } from "@/components/admin/delete-stock-request-button"
 
 type Tab = "todos" | "agotados" | "solicitudes"
 
@@ -292,6 +293,7 @@ export default async function AdminProductosPage({
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Fecha</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Estado</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-text-soft uppercase">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brown/5">
@@ -315,6 +317,9 @@ export default async function AdminProductosPage({
                           requestId={s.id}
                           notified={s.notified ?? false}
                         />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <DeleteStockRequestButton requestId={s.id} />
                       </td>
                     </tr>
                   ))}
