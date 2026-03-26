@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Plus, Pencil, Instagram, AlertCircle } from "lucide-react"
 import { DeleteProductButton } from "@/components/admin/delete-product-button"
 import { ToggleNotificadoButton } from "@/components/admin/toggle-notificado-button"
+import { ProductQuickControls } from "@/components/admin/product-quick-controls"
 
 type Tab = "todos" | "agotados" | "solicitudes"
 
@@ -136,8 +137,7 @@ export default async function AdminProductosPage({
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Producto</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Categoría</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Precio</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Stock</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Estado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-soft uppercase">Controles</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-text-soft uppercase">Acciones</th>
                   </tr>
                 </thead>
@@ -151,7 +151,7 @@ export default async function AdminProductosPage({
                             <img
                               src={product.image_url}
                               alt={product.name}
-                              className="h-10 w-10 rounded-xl object-cover flex-shrink-0"
+                              className="h-10 w-10 rounded-xl object-cover shrink-0"
                             />
                           )}
                           <span className="font-medium text-text-main text-sm">{product.name}</span>
@@ -163,27 +163,13 @@ export default async function AdminProductosPage({
                       <td className="px-6 py-4 text-sm font-medium text-terracota">
                         {Number(product.price).toFixed(2)} €
                       </td>
-                      <td className="px-6 py-4 text-sm text-text-soft">
-                        {product.stock ?? "—"}
-                      </td>
                       <td className="px-6 py-4">
-                        <div className="flex gap-1 flex-wrap">
-                          {(product.stock === null || product.stock <= 0) && (
-                            <span className="rounded-full bg-brown/10 px-2 py-0.5 text-xs text-brown">
-                              Agotado
-                            </span>
-                          )}
-                          {product.is_featured && (
-                            <span className="rounded-full bg-terracota/10 px-2 py-0.5 text-xs text-terracota">
-                              Novedad
-                            </span>
-                          )}
-                          {product.is_on_sale && (
-                            <span className="rounded-full bg-brown/10 px-2 py-0.5 text-xs text-brown">
-                              Oferta
-                            </span>
-                          )}
-                        </div>
+                        <ProductQuickControls
+                          productId={product.id}
+                          isFeatured={product.is_featured ?? false}
+                          isOnSale={product.is_on_sale ?? false}
+                          stock={product.stock}
+                        />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -242,7 +228,7 @@ export default async function AdminProductosPage({
                               <img
                                 src={product.image_url}
                                 alt={product.name}
-                                className="h-10 w-10 rounded-xl object-cover flex-shrink-0 grayscale"
+                                className="h-10 w-10 rounded-xl object-cover shrink-0 grayscale"
                               />
                             )}
                             <span className="font-medium text-text-main text-sm">{product.name}</span>
