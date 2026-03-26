@@ -2,9 +2,7 @@
 // Sends email to admin when a new order is placed
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from '@/lib/mailer'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,8 +25,7 @@ export async function POST(request: NextRequest) {
       </tr>
     `).join('')
 
-    await resend.emails.send({
-      from: 'MarfilYFresa <onboarding@resend.dev>', // ###correo Natalia
+    await sendEmail({
       to: process.env.ADMIN_EMAIL!,
       subject: `🍓 Nuevo pedido de ${customerName} — ${total.toFixed(2)} €`,
       html: `

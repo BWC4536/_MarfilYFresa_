@@ -11,9 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server"
-import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from "@/lib/mailer"
 
 interface CartItemPayload {
   id: string
@@ -157,8 +155,7 @@ export async function POST(req: NextRequest) {
 
     await Promise.allSettled([
       // Email al admin
-      resend.emails.send({
-        from: "MarfilYFresa <onboarding@resend.dev>",
+      sendEmail({
         to: process.env.ADMIN_EMAIL!,
         subject: `🍓 Nuevo pedido ${orderNumber} de ${customerName} — ${total.toFixed(2)} €`,
         html: `
@@ -215,8 +212,7 @@ export async function POST(req: NextRequest) {
       }),
 
       // Email de confirmación al cliente
-      resend.emails.send({
-        from: "MarfilYFresa <onboarding@resend.dev>",
+      sendEmail({
         to: user.email!,
         subject: `Pedido ${orderNumber} recibido 🍓`,
         html: `

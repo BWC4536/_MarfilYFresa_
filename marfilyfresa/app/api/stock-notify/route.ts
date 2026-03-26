@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Resend } from "resend"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from "@/lib/mailer"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +12,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "agotado") {
       // Email al admin avisando que el producto se agotó
-      await resend.emails.send({
-        from: "MarfilYFresa <onboarding@resend.dev>", // ###correo Natalia
+      await sendEmail({
         to: process.env.ADMIN_EMAIL!,
         subject: `⚠️ Producto agotado: ${productName}`,
         html: `
@@ -86,8 +83,7 @@ export async function POST(request: NextRequest) {
 
       // Enviar email a cada cliente que pidió aviso
       const emailPromises = requests.map((r) =>
-        resend.emails.send({
-          from: "MarfilYFresa <onboarding@resend.dev>", // ###correo Natalia
+        sendEmail({
           to: r.customer_email,
           subject: `🍓 ¡Ya disponible! ${productName} — MarfilYFresa`,
           html: `

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
-import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from "@/lib/mailer"
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,8 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Send email notification to admin
-    await resend.emails.send({
-      from: "MarfilYFresa <onboarding@resend.dev>",
+    await sendEmail({
       to: process.env.ADMIN_EMAIL!,
       subject: `Nuevo mensaje de contacto: ${subject || "Sin asunto"}`,
       html: `
@@ -48,8 +45,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send confirmation email to user
-    await resend.emails.send({
-      from: "MarfilYFresa <onboarding@resend.dev>",
+    await sendEmail({
       to: email,
       subject: "Hemos recibido tu mensaje 🍓",
       html: `

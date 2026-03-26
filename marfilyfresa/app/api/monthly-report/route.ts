@@ -3,10 +3,8 @@
 // Configurado en vercel.json como cron job
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
 import { createSupabaseAdminClient } from '@/lib/supabase'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from '@/lib/mailer'
 
 export async function GET(request: NextRequest) {
   // ── Seguridad: verificar que la llamada viene de Vercel Cron ──────────────
@@ -86,8 +84,7 @@ export async function GET(request: NextRequest) {
       totalProducts: allProducts?.length ?? 0,
     })
 
-    await resend.emails.send({
-      from: 'MarfilYFresa <onboarding@resend.dev>', // ###correo Natalia
+    await sendEmail({
       to: process.env.ADMIN_EMAIL!,
       subject: `📊 Informe mensual MarfilYFresa — ${monthName}`,
       html: emailHtml,

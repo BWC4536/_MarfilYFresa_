@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
-import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendEmail } from "@/lib/mailer"
 
 interface OrderItem {
   quantity: number
@@ -65,8 +63,7 @@ export async function POST(req: NextRequest) {
       )
       .join("")
 
-    await resend.emails.send({
-      from: "MarfilYFresa <onboarding@resend.dev>",
+    await sendEmail({
       to: order.customer_email,
       subject: `Tu pedido MarfilYFresa está en camino 🍓`,
       html: `
