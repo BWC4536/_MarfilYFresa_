@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 const STATUSES = [
@@ -28,22 +27,33 @@ export function OrderStatusSelect({
   currentStatus: string
 }) {
   const [status, setStatus] = useState(currentStatus)
-  const supabase = createSupabaseBrowserClient()
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   async function handleChange(newStatus: string) {
-    setStatus(newStatus)
-    await supabase.from("orders").update({ status: newStatus }).eq("id", orderId)
+    setStatus(newStatus) // optimistic
+    setLoading(true)
 
-    // Email al cliente cuando el pedido pasa a "enviado"
-    if (newStatus === "shipped") {
-      await fetch("/api/notify-shipping", {
+    const res = await fetch(`/api/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    })
+
+    if (!res.ok) {
+      setStatus(currentStatus) // revert on error
+    }
+
+    // Email de envío (status shipped)
+    if (res.ok && newStatus === "shipped") {
+      fetch("/api/notify-shipping", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
-      })
+      }).catch(() => null)
     }
 
+    setLoading(false)
     router.refresh()
   }
 
@@ -51,7 +61,8 @@ export function OrderStatusSelect({
     <select
       value={status}
       onChange={(e) => handleChange(e.target.value)}
-      className={`rounded-full border px-4 py-1.5 text-sm font-medium focus:outline-none cursor-pointer ${statusColors[status] ?? "bg-gray-100 text-gray-700 border-gray-200"}`}
+      disabled={loading}
+      className={`rounded-full border px-4 py-1.5 text-sm font-medium focus:outline-none cursor-pointer disabled:opacity-60 ${statusColors[status] ?? "bg-gray-100 text-gray-700 border-gray-200"}`}
     >
       {STATUSES.map((s) => (
         <option key={s.value} value={s.value}>
