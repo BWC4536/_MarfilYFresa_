@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
 import { sendEmail } from "@/lib/mailer"
 
-const VALID_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
+const VALID_STATUSES = ["pending", "confirmed", "cancelled"]
 
 interface OrderItem {
   quantity: number
@@ -149,6 +149,23 @@ export async function PATCH(
 </body></html>`,
       }).catch((e) => console.error("cancel email error:", e))
     }
+  }
+
+  return NextResponse.json({ success: true })
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const admin = createSupabaseAdminClient()
+
+  // order_items se borran en cascada (FK con ON DELETE CASCADE en Supabase)
+  const { error } = await admin.from("orders").delete().eq("id", id)
+
+  if (error) {
+    return NextResponse.json({ error: (error as { message: string }).message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
