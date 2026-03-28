@@ -1,12 +1,20 @@
 // app/api/analyze-instagram/route.ts
-// Analiza un post de Instagram y extrae los datos del producto con Claude
+// Analiza un post de Instagram y extrae los datos del producto con Gemini
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? '')
+
+const PROMPT_JSON = `Extrae la información y devuelve ÚNICAMENTE un objeto JSON con esta estructura exacta, sin explicaciones ni texto adicional:
+{
+  "name": "nombre corto y descriptivo del producto",
+  "description": "descripción atractiva de 1-2 frases",
+  "price": 12.99,
+  "category": "anillos" | "collares" | "pulseras" | "pendientes" | "bolsos" | "sudaderas" | "otros"
+}
+
+Si no encuentras el precio, pon null. El nombre debe ser conciso (máximo 5 palabras).`
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,18 +40,16 @@ export async function POST(request: NextRequest) {
         'Sec-Fetch-Mode': 'navigate',
       }
 
-      // Extraer shortcode de la URL
       const shortcodeMatch = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/)
       const shortcode = shortcodeMatch?.[1]
 
-      // Estrategia 1: endpoint /embed/ (más fiable que el post principal)
+      // Estrategia 1: endpoint /embed/
       if (shortcode && !imageUrl) {
         try {
           const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/`
           const res = await fetch(embedUrl, { headers: baseHeaders })
           const html = await res.text()
 
-          // Imagen desde múltiples patrones del embed
           const patterns = [
             /<meta property="og:image" content="([^"]+)"/,
             /<img[^>]+class="[^"]*EmbeddedMediaImage[^"]*"[^>]+src="([^"]+)"/,
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Estrategia 2: URL original con UA de navegador real
+      // Estrategia 2: URL original
       if (!imageUrl) {
         try {
           const res = await fetch(url, { headers: baseHeaders })
@@ -95,110 +101,59 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ── Preparar el mensaje para Claude ──────────────────────────────────────
-    const messages: Anthropic.MessageParam[] = []
+    // ── Llamar a Gemini ───────────────────────────────────────────────────────
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+
+    let rawText: string
 
     if (imageUrl) {
-      // Descargar la imagen y convertirla a base64
       try {
         const imgRes = await fetch(imageUrl)
         const imgBuffer = await imgRes.arrayBuffer()
         const base64 = Buffer.from(imgBuffer).toString('base64')
-        const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+        const mimeType = (imgRes.headers.get('content-type') ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
 
-        messages.push({
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: contentType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-                data: base64,
-              },
-            },
-            {
-              type: 'text',
-              text: `Analiza este producto de joyería/moda de la tienda MarfilYFresa.
+        const result = await model.generateContent([
+          {
+            inlineData: { data: base64, mimeType },
+          },
+          `Analiza este producto de joyería/moda de la tienda MarfilYFresa.
 ${description ? `Descripción del post: "${description}"` : ''}
 
-Extrae la información y devuelve ÚNICAMENTE un objeto JSON con esta estructura exacta, sin explicaciones ni texto adicional:
-{
-  "name": "nombre corto y descriptivo del producto",
-  "description": "descripción atractiva de 1-2 frases",
-  "price": 12.99,
-  "category": "anillos" | "collares" | "pulseras" | "pendientes" | "bolsos" | "sudaderas" | "otros"
-}
-
-Si no encuentras el precio, pon null. El nombre debe ser conciso (máximo 5 palabras).`,
-            },
-          ],
-        })
+${PROMPT_JSON}`,
+        ])
+        rawText = result.response.text()
       } catch {
-        // Si falla la descarga de la imagen, analizamos solo el texto
-        messages.push({
-          role: 'user',
-          content: `Analiza este producto de la tienda de joyería MarfilYFresa basándote en esta descripción:
-"${description}"
-
-Devuelve ÚNICAMENTE un objeto JSON con esta estructura exacta, sin explicaciones ni texto adicional:
-{
-  "name": "nombre corto y descriptivo del producto",
-  "description": "descripción atractiva de 1-2 frases",
-  "price": 12.99,
-  "category": "anillos" | "collares" | "pulseras" | "pendientes" | "bolsos" | "sudaderas" | "otros"
-}
-
-Si no encuentras el precio, pon null.`,
-        })
+        // Si falla la imagen, solo texto
+        const result = await model.generateContent(
+          `Analiza este producto de la tienda de joyería MarfilYFresa basándote en esta descripción:\n"${description}"\n\n${PROMPT_JSON}`
+        )
+        rawText = result.response.text()
       }
     } else {
-      // Solo texto
-      messages.push({
-        role: 'user',
-        content: `Analiza este producto de la tienda de joyería MarfilYFresa basándote en esta descripción:
-"${description}"
-
-Devuelve ÚNICAMENTE un objeto JSON con esta estructura exacta, sin explicaciones ni texto adicional:
-{
-  "name": "nombre corto y descriptivo del producto",
-  "description": "descripción atractiva de 1-2 frases",
-  "price": 12.99,
-  "category": "anillos" | "collares" | "pulseras" | "pendientes" | "bolsos" | "sudaderas" | "otros"
-}
-
-Si no encuentras el precio, pon null.`,
-      })
+      const result = await model.generateContent(
+        `Analiza este producto de la tienda de joyería MarfilYFresa basándote en esta descripción:\n"${description}"\n\n${PROMPT_JSON}`
+      )
+      rawText = result.response.text()
     }
 
-    // ── Llamar a Claude ───────────────────────────────────────────────────────
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      messages,
-    })
-
-    const rawText = response.content
-      .filter(b => b.type === 'text')
-      .map(b => (b as { type: 'text'; text: string }).text)
-      .join('')
-
-    // Limpiar posibles backticks de markdown
     const cleanJson = rawText.replace(/```json\n?|\n?```/g, '').trim()
-    const productData = JSON.parse(cleanJson)
+    const jsonMatch = cleanJson.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error(`Gemini no devolvió JSON válido: ${cleanJson.slice(0, 200)}`)
+    const productData = JSON.parse(jsonMatch[0])
 
     return NextResponse.json({
       success: true,
       data: {
         ...productData,
-        image_url: imageUrl, // URL original de Instagram para previsualizar
+        image_url: imageUrl,
       },
     })
 
   } catch (error) {
     console.error('Error analizando Instagram:', error)
     return NextResponse.json(
-      { error: 'Error al analizar el post. Prueba con la descripción manual.' },
+      { error: `Error al analizar el post: ${error instanceof Error ? error.message : 'Error desconocido'}` },
       { status: 500 }
     )
   }
