@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    command: start --tunnel
+    environment:
+      - TZ=Europe/Madrid
+      # Las variables de Basic Auth se han eliminado porque n8n v1+ gestiona el login por UI.
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: always
+
+volumes:
+  n8n_data:

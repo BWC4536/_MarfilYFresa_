@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+echo "README.md" >> .gitignore
+echo "CLAUDE.md" >> .gitignore
+echo "PROMPT_V0.txt" >> .gitignore
+echo "AGENTS.md" >> .gitignore
