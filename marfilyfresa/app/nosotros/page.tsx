@@ -20,12 +20,12 @@ export default function NosotrosPage() {
 
               {/* Image */}
               <div className="relative w-full max-w-md lg:w-1/2">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-terracota/20">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-transparent">
                   <Image
                     src="/logo2.png"
-                    alt="Joyería artesanal colorida"
+                    alt="MarfilYFresa"
                     fill
-                    className="object-cover"
+                    className="object-contain p-6"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
