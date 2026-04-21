@@ -31,7 +31,7 @@ export function Hero() {
       {/* Content — fade-in + scale */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 animate-hero-enter">
         <Image
-          src="/logo2.jpeg"
+          src="/logo2.png"
           alt="MarfilYFresa"
           width={420}
           height={158}
