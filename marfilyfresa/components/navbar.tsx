@@ -77,7 +77,6 @@ export function Navbar() {
                   </Link>
                 ))}
               </div>
-
               {/* Right side icons */}
               <div className="flex items-center gap-1">
                 {/* Instagram */}
