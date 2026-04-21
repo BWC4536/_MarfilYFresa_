@@ -20,9 +20,9 @@ interface DiscountResult {
 
 
 const PICKUP_POINTS = [
-  { id: "opcion-1", label: "Opción 1" },
-  { id: "opcion-2", label: "Opción 2" },
-  { id: "opcion-3", label: "Opción 3" },
+  { id: "opcion-1", label: "Kiosco Verde (Avda primero de mayo N°33)" },
+  { id: "opcion-2", label: "Estanco 2 (Avda primero de mayo N°4)" },
+  { id: "opcion-3", label: "Estanco 7 (Calle carretero N°58)" },
 ]
 
 export default function CarritoPage() {
