@@ -62,7 +62,7 @@ export function Navbar() {
 
               {/* Logo */}
               <Link href="/" className="flex items-center">
-                <Image src="/logo2.svg" alt="MarfilYFresa" width={120} height={45} priority />
+                <Image src="/logo2.jpeg" alt="MarfilYFresa" width={120} height={45} priority />
               </Link>
 
               {/* Desktop Navigation */}
