@@ -22,7 +22,7 @@ export default function NosotrosPage() {
               <div className="relative w-full max-w-md lg:w-1/2">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-terracota/20">
                   <Image
-                    src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=750&fit=crop&q=80"
+                    src="/logo2.png"
                     alt="Joyería artesanal colorida"
                     fill
                     className="object-cover"
