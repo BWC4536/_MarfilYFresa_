@@ -28,7 +28,7 @@ export function Footer() {
               <span className="font-serif text-xl text-cream">MarfilFresa</span>
               <span className="text-sm">🍓</span>
             </Link>
-            <p className="text-xs text-cream/60">Desde 2021 · Joyas de acero inoxidable y plata</p>
+            <p className="text-xs text-cream/60">Desde 2021 · Joyas de Acero Inoxidable y Plata de Ley 925</p>
           </div>
 
           {/* Quick Links */}

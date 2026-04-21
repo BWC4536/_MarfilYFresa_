@@ -31,7 +31,7 @@ export function Hero() {
       {/* Content — fade-in + scale */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 animate-hero-enter">
         <Image
-          src="/logo.svg"
+          src="/logo2.svg"
           alt="MarfilYFresa"
           width={420}
           height={158}
@@ -61,7 +61,7 @@ export function Hero() {
         </div>
 
         <p className="mt-8 text-sm text-text-soft">
-          Joyas de acero inoxidable y plata · Desde 2021
+          Joyas de Acero Inoxidable y Plata de Ley 925 · Desde 2021
         </p>
       </div>
     </section>
