@@ -16,9 +16,9 @@ interface OrderRow {
   order_number: string | null
   status: string | null
   customer_name: string | null
-  customer_email: string | null
   customer_address: string | null
   total_amount: number
+  user_id: string | null
   order_items: OrderItem[]
 }
 
@@ -40,7 +40,7 @@ export async function PATCH(
   const { data: order, error: orderError } = (await admin
     .from("orders")
     .select(
-      `id, order_number, status, customer_name, customer_email, customer_address, total_amount,
+      `id, order_number, status, customer_name, customer_address, total_amount, user_id,
        order_items ( quantity, price_at_time, product_id, products ( name ) )`
     )
     .eq("id", id)
@@ -51,6 +51,13 @@ export async function PATCH(
   }
 
   const previousStatus = order.status
+
+  // Resolve customer email from auth.users
+  let customerEmail: string | null = null
+  if (order.user_id) {
+    const { data: userData } = await admin.auth.admin.getUserById(order.user_id)
+    customerEmail = userData?.user?.email ?? null
+  }
 
   // Update status in DB
   const { error: updateError } = await admin
@@ -64,7 +71,7 @@ export async function PATCH(
 
   // ── Confirmado: email al cliente ───────────────────────────────────────────
   if (newStatus === "confirmed" && previousStatus !== "confirmed") {
-    if (order.customer_email) {
+    if (customerEmail) {
       const customerName = order.customer_name ?? "clienta"
       const orderNumber = order.order_number ?? id.slice(0, 8)
       const total = Number(order.total_amount)
@@ -83,7 +90,7 @@ export async function PATCH(
         .join("")
 
       sendEmail({
-        to: order.customer_email,
+        to: customerEmail!,
         subject: `¡Pedido ${orderNumber} confirmado! 🍓`,
         html: `
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
@@ -143,7 +150,7 @@ export async function PATCH(
 
   // ── Listo para recoger: email al cliente ───────────────────────────────────
   if (newStatus === "ready" && previousStatus !== "ready") {
-    if (order.customer_email) {
+    if (customerEmail) {
       const customerName = order.customer_name ?? "clienta"
       const orderNumber = order.order_number ?? id.slice(0, 8)
       const total = Number(order.total_amount)
@@ -162,7 +169,7 @@ export async function PATCH(
         .join("")
 
       sendEmail({
-        to: order.customer_email,
+        to: customerEmail!,
         subject: `¡Tu pedido ${orderNumber} está listo para recoger! 🍓`,
         html: `
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
@@ -240,7 +247,7 @@ export async function PATCH(
     }
 
     // Email de cancelación al cliente
-    if (order.customer_email) {
+    if (customerEmail) {
       const customerName = order.customer_name ?? "clienta"
       const orderNumber = order.order_number ?? id.slice(0, 8)
       const total = Number(order.total_amount)
@@ -258,7 +265,7 @@ export async function PATCH(
         .join("")
 
       sendEmail({
-        to: order.customer_email,
+        to: customerEmail!,
         subject: `Tu pedido ${orderNumber} ha sido cancelado`,
         html: `
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
