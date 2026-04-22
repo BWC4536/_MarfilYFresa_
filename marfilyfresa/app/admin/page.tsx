@@ -30,7 +30,7 @@ export default async function AdminPage({
   let earningsQuery = supabase
     .from("orders")
     .select("total_amount")
-    .eq("status", "confirmed")
+    .in("status", ["confirmed", "ready"])
 
   if (period === "month") {
     const now = new Date()
