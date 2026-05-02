@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createSupabaseAdminClient } from "@/lib/supabase-server"
 import Link from "next/link"
 import { Package, ShoppingBag, Users, Heart, Instagram } from "lucide-react"
 import { EarningsWidget } from "@/components/admin/earnings-widget"
@@ -24,7 +24,8 @@ export default async function AdminPage({
   searchParams: Promise<SearchParams>
 }) {
   const { period, from, to } = await searchParams
-  const supabase = await createSupabaseServerClient()
+  // Usar admin client para que los admins vean todos los datos sin restricciones de RLS
+  const supabase = createSupabaseAdminClient()
 
   // Build earnings query based on filters
   let earningsQuery = supabase

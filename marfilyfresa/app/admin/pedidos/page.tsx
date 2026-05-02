@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createSupabaseAdminClient } from "@/lib/supabase-server"
 import { OrderStatusSelect } from "@/components/admin/order-status-select"
 import { RealtimeOrdersSync } from "@/components/admin/realtime-orders-sync"
 import { RefreshCw } from "lucide-react"
@@ -25,7 +25,8 @@ interface OrderWithItems {
 }
 
 export default async function AdminPedidosPage() {
-  const supabase = await createSupabaseServerClient()
+  // Usar admin client para bypasear RLS - los admins deben ver TODOS los pedidos
+  const supabase = createSupabaseAdminClient()
 
   const result = await supabase
     .from("orders")

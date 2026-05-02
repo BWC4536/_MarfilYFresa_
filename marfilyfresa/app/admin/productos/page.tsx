@@ -19,11 +19,11 @@ export default async function AdminProductosPage({
       ? tabParam
       : "todos"
 
-  const supabase = await createSupabaseServerClient()
+  // Usar admin client para que los admins vean todos los productos sin restricciones de RLS
   const admin = createSupabaseAdminClient()
 
   // ── Todos ─────────────────────────────────────────────────────────────────
-  const { data: allProducts } = await supabase
+  const { data: allProducts } = await admin
     .from("products")
     .select("*")
     .order("created_at", { ascending: false })
