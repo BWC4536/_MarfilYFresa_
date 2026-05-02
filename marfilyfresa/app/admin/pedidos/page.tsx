@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { OrderStatusSelect } from "@/components/admin/order-status-select"
+import { RealtimeOrdersSync } from "@/components/admin/realtime-orders-sync"
+import { RefreshCw } from "lucide-react"
 
 interface OrderItem {
   id: string
@@ -25,21 +27,42 @@ interface OrderWithItems {
 export default async function AdminPedidosPage() {
   const supabase = await createSupabaseServerClient()
 
-  const { data: orders } = (await supabase
+  const result = await supabase
     .from("orders")
     .select(
       `id, order_number, total_amount, status, created_at, user_id,
        customer_name, customer_phone, customer_address, notes,
        order_items ( id, quantity, price_at_time, products ( name, image_url ) )`
     )
-    .order("created_at", { ascending: false })) as unknown as { data: OrderWithItems[] | null }
+    .order("created_at", { ascending: false })
+
+  const orders = result.data as OrderWithItems[] | null
+  const error = result.error
 
   return (
     <div className="px-6 py-8 max-w-5xl mx-auto">
+      {/* Componente invisible que sincroniza en tiempo real */}
+      <RealtimeOrdersSync />
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-serif text-2xl text-text-main">Pedidos</h1>
         <p className="text-text-soft text-sm">{orders?.length ?? 0} pedidos</p>
       </div>
+
+      {/* Error message si la query falla */}
+      {error && (
+        <div className="rounded-2xl bg-red-50 border border-red-200 p-4 mb-6">
+          <p className="text-sm text-red-700 font-medium mb-2">❌ Error al cargar pedidos</p>
+          <p className="text-xs text-red-600 font-mono break-words">
+            {typeof error === "object" && error !== null && "message" in error
+              ? String((error as { message: string }).message)
+              : String(error)}
+          </p>
+          <p className="text-xs text-red-600 mt-2">
+            Por favor, intenta recargar la página. Si el problema persiste, contacta al soporte.
+          </p>
+        </div>
+      )}
 
       {!orders || orders.length === 0 ? (
         <div className="rounded-2xl bg-white flex items-center justify-center py-16 text-text-soft text-sm">
