@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server"
 import { sendEmail } from "@/lib/mailer"
+import { validateOrderInput, cleanString } from "@/lib/validation"
 
 interface CartItemPayload {
   id: string
@@ -48,20 +49,28 @@ function applyDiscount(items: CartItemPayload[], dc: DiscountCode): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const { customerName, customerPhone, customerAddress, notes, items, total, discountCode } =
-      (await req.json()) as {
-        customerName: string
-        customerPhone: string
-        customerAddress: string
-        notes?: string
-        items: CartItemPayload[]
-        total: number
-        discountCode?: string
-      }
+    const rawData = await req.json()
+    const { customerName, customerPhone, customerAddress, notes, items, total, discountCode } = rawData
 
-    if (!customerName || !customerPhone || !customerAddress || !items?.length) {
-      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 })
+    // Validar entrada
+    const validation = validateOrderInput(rawData)
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.errors.join("; ") }, { status: 400 })
     }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: "El carrito está vacío" }, { status: 400 })
+    }
+
+    if (typeof total !== "number" || total <= 0) {
+      return NextResponse.json({ error: "Total inválido" }, { status: 400 })
+    }
+
+    // Limpiar strings de entrada
+    const cleanName = cleanString(customerName, 100)
+    const cleanPhone = cleanString(customerPhone, 20)
+    const cleanAddress = cleanString(customerAddress, 255)
+    const cleanNotes = notes ? cleanString(notes, 1000) : null
 
     // Verificar autenticación
     const supabase = await createSupabaseServerClient()
@@ -158,11 +167,11 @@ export async function POST(req: NextRequest) {
         order_number: orderNumber,
         total_amount: finalTotal,
         status: "pending",
-        customer_name: customerName,
+        customer_name: cleanName,
         customer_email: user.email ?? null,
-        customer_phone: customerPhone,
-        customer_address: customerAddress,
-        notes: [discountNotes, notes || null].filter(Boolean).join("\n") || null,
+        customer_phone: cleanPhone,
+        customer_address: cleanAddress,
+        notes: [discountNotes, cleanNotes || null].filter(Boolean).join("\n") || null,
       })
       .select()
       .single()

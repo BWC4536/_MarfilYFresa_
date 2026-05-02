@@ -1,23 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseAdminClient } from "@/lib/supabase-server"
 import { sendEmail } from "@/lib/mailer"
+import { validateContactInput, escapeHtml, cleanString } from "@/lib/validation"
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, subject, message } = await req.json()
+    const rawData = await req.json()
+    const { name, email, subject, message } = rawData
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 })
+    // Validar entrada
+    const validation = validateContactInput(rawData)
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.errors.join("; ") }, { status: 400 })
     }
+
+    // Limpiar strings de entrada
+    const cleanName = cleanString(name, 100)
+    const cleanEmail = cleanString(email, 255).toLowerCase()
+    const cleanSubject = cleanString(subject, 200)
+    const cleanMessage = cleanString(message, 5000)
 
     const supabase = createSupabaseAdminClient()
 
     // Save to contacts table
     const { error: dbError } = await supabase.from("contacts").insert({
-      name,
-      email,
-      subject: subject || null,
-      message,
+      name: cleanName,
+      email: cleanEmail,
+      subject: cleanSubject || null,
+      message: cleanMessage,
     })
 
     if (dbError) {
@@ -25,18 +35,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Error al guardar el mensaje" }, { status: 500 })
     }
 
-    // Send email notification to admin
+    // Send email notification to admin (con HTML escapado para evitar XSS)
     await sendEmail({
       to: process.env.ADMIN_EMAIL!,
-      subject: `Nuevo mensaje de contacto: ${subject || "Sin asunto"}`,
+      subject: `Nuevo mensaje de contacto: ${escapeHtml(cleanSubject) || "Sin asunto"}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #764b36;">Nuevo mensaje de contacto</h2>
-          <p><strong>De:</strong> ${name} (${email})</p>
-          ${subject ? `<p><strong>Asunto:</strong> ${subject}</p>` : ""}
+          <p><strong>De:</strong> ${escapeHtml(cleanName)} (${escapeHtml(cleanEmail)})</p>
+          ${cleanSubject ? `<p><strong>Asunto:</strong> ${escapeHtml(cleanSubject)}</p>` : ""}
           <p><strong>Mensaje:</strong></p>
           <blockquote style="border-left: 3px solid #d1774c; padding-left: 16px; color: #764b36;">
-            ${message.replace(/\n/g, "<br>")}
+            ${escapeHtml(cleanMessage).replace(/\n/g, "<br>")}
           </blockquote>
           <hr style="border-color: #efe7dd; margin: 24px 0;" />
           <p style="color: #a07860; font-size: 12px;">MarfilYFresa — Panel de administración</p>
@@ -44,15 +54,15 @@ export async function POST(req: NextRequest) {
       `,
     })
 
-    // Send confirmation email to user
+    // Send confirmation email to user (con HTML escapado)
     await sendEmail({
-      to: email,
+      to: cleanEmail,
       subject: "Hemos recibido tu mensaje 🍓",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #764b36;">¡Gracias por escribirnos, ${name}!</h2>
+          <h2 style="color: #764b36;">¡Gracias por escribirnos, ${escapeHtml(cleanName)}!</h2>
           <p style="color: #a07860;">Hemos recibido tu mensaje y te responderemos lo antes posible.</p>
-          ${subject ? `<p><strong>Tu asunto:</strong> ${subject}</p>` : ""}
+          ${cleanSubject ? `<p><strong>Tu asunto:</strong> ${escapeHtml(cleanSubject)}</p>` : ""}
           <p style="color: #a07860; font-size: 14px;">
             Mientras tanto, puedes explorar nuestra colección en <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #d1774c;">MarfilYFresa</a>.
           </p>
