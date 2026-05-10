@@ -53,7 +53,7 @@ export function cleanString(input: string | null | undefined, maxLength: number 
  */
 export function validateAddress(address: string): boolean {
   // Permite direcciones con números, letras, comas, guiones, etc
-  const addressRegex = /^[a-zA-Z0-9\s\-,áéíóúñÁÉÍÓÚÑ()/.]{1,255}$/
+  const addressRegex = /^[a-zA-Z0-9\s\-,áéíóúñÁÉÍÓÚÑ()/°.]{1,255}$/
   return addressRegex.test(address.trim())
 }
 
